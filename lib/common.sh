@@ -35,7 +35,17 @@ DOMAIN_STATUS_ACTIVE="active"
 
 CDN_PREFIXES=(cdn lobby-prod-cdn)
 
+# EGT "Operator Proxy Server Setup Guide", Group 2. Every per-client label ends
+# in -bgsp. Both naming forms are generated: EGT are migrating off the -bgsp
+# convention brand by brand, and a brand that flips would otherwise lose its
+# vhost with no warning. Serving both costs only server_name entries, and the
+# wildcard certificate already covers them.
 DEFAULT_CLIENT_PREFIXES=(
+  "__CLIENT__-gs-prod-bgsp"
+  "__CLIENT__-gs-demo-prod-bgsp"
+  "__CLIENT__-lobby-prod-bgsp"
+  "__CLIENT__-api-prod-bgsp"
+  "__CLIENT__-gc-prod-bgsp"
   "__CLIENT__-gs-prod"
   "__CLIENT__-gs-demo-prod"
   "__CLIENT__-lobby-prod"
@@ -47,11 +57,11 @@ DEFAULT_SHARED_PREFIXES=(
   "lottery-api-instant"
   "lottery-api-instant-prod"
   "lottery-web-prod"
-  "player-history-prod"
   "player-history-prod-bgsp"
-  "tournaments-prod"
   "tournaments-prod-bgsp"
   "replays-ong-prod-ext"
+  "player-history-prod"
+  "tournaments-prod"
 )
 
 # Populated by discover_clients / load_origin_prefixes
