@@ -41,6 +41,7 @@ BACKEND_ORIGIN=""
 CERTBOT_EMAIL=""
 ROTATION_INTERVAL_DAYS=1
 DOMAIN_RETENTION_DAYS=14
+DOMAIN_PREFIX=""
 
 PACKAGE_FILES=(
   "scripts/rotate-domain.sh"
@@ -80,6 +81,11 @@ Options:
   --client-name NAME      Alias for a single --client (legacy)
   --cdn-origin HOST       Upstream host for CDN vhost (required), e.g. cdn.example.com
   --backend-origin HOST   Upstream host for backend/origin vhost (required), e.g. p4.example.com
+  --domain-prefix STR     Prefix for generated domains, e.g. 'p4-' produces
+                          p4-<random>.com. Lowercase letters, digits and hyphens;
+                          must start with a letter. Cosmetic - it does not affect
+                          routing - but makes the serving cluster visible in the
+                          domain name.
   --email EMAIL           Real mailbox used for Let's Encrypt and InternetBS registrant
                           verification (required). Confirm InternetBS messages sent here.
   --rotate-every-days N   Buy a new domain every N days (default: 1). Cron still runs daily
@@ -193,6 +199,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --backend-origin)
       BACKEND_ORIGIN="${2:-}"
+      shift 2
+      ;;
+    --domain-prefix)
+      DOMAIN_PREFIX="${2:-}"
       shift 2
       ;;
     --email|--certbot-email)
@@ -359,6 +369,7 @@ BACKEND_ORIGIN="${BACKEND_ORIGIN}"
 CERTBOT_EMAIL="${CERTBOT_EMAIL}"
 ROTATION_INTERVAL_DAYS="${ROTATION_INTERVAL_DAYS}"
 DOMAIN_RETENTION_DAYS="${DOMAIN_RETENTION_DAYS}"
+DOMAIN_PREFIX="${DOMAIN_PREFIX}"
 EOF
   chmod 600 "${PROXIES_ETC}/credentials.env"
   log "Wrote ${PROXIES_ETC}/credentials.env (rotate every ${ROTATION_INTERVAL_DAYS}d; retain ${DOMAIN_RETENTION_DAYS}d)"

@@ -222,11 +222,29 @@ internetbs_point_domain_to_ip() {
   internetbs_dns_add "*.${domain}" "A" "${ip}"
 }
 
+# DOMAIN_PREFIX is prepended to the random label, e.g. DOMAIN_PREFIX="p4-" yields
+# p4-abcdefghijklmnopqrst.com. Purely cosmetic to the routing - EGT match on the
+# leftmost hostname label and ignore the domain - but it makes the serving cluster
+# readable at a glance when several rotated domains are live at once, which is how
+# EGT name their own proxy domains.
 find_available_domain() {
   local max_attempts="${1:-30}"
   local attempt label domain
+  local prefix="${DOMAIN_PREFIX:-}"
+  local length="${DOMAIN_LABEL_LENGTH:-20}"
+
+  if [[ -n "${prefix}" ]]; then
+    # The full label must stay a valid DNS label: letters, digits and inner
+    # hyphens, 63 characters at most. A leading digit or a trailing hyphen would
+    # be rejected at registration, after the availability check has passed.
+    [[ "${prefix}" =~ ^[a-z][a-z0-9-]*$ ]] \
+      || die "DOMAIN_PREFIX='${prefix}' must start with a letter and contain only lowercase letters, digits and hyphens"
+    [[ $((${#prefix} + length)) -le 63 ]] \
+      || die "DOMAIN_PREFIX='${prefix}' plus a ${length}-character label exceeds the 63-character DNS label limit"
+  fi
+
   for ((attempt = 1; attempt <= max_attempts; attempt++)); do
-    label="$(random_label 20)"
+    label="${prefix}$(random_label "${length}")"
     domain="${label}.com"
     log "Checking availability for ${domain} (attempt ${attempt}/${max_attempts})"
     if internetbs_domain_available "${domain}"; then

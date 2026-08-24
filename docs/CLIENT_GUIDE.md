@@ -394,6 +394,7 @@ sudo nginx -t && sudo systemctl reload nginx
 | `--client-name NAME` | Legacy alias for a single `--client` |
 | `--cdn-origin` | Upstream host for CDN vhost (**required**), e.g. `cdn.example.com` |
 | `--backend-origin` | Upstream host for backend vhost (**required**), e.g. `p4.example.com` |
+| `--domain-prefix` | Prefix for generated domains, e.g. `p4-` gives `p4-<random>.com`. Cosmetic — routing ignores the domain — but it makes the serving cluster visible when several rotated domains are live, and when p3 and p4 brands are split across VMs. |
 | `--email` | Real mailbox for Let's Encrypt **and** InternetBS registrant verification (**required**) |
 | `--rotate-every-days N` | Purchase a new domain every N days (default: `1`, max: `365`). Cron still runs daily. |
 | `--retention-days N` | Keep each domain’s local nginx sites and certs for N days (default: `14`, max: `365`). |
