@@ -369,10 +369,13 @@ ensure_prefix_files() {
     fi
     chmod 644 "${PREFIXES_CLIENT_FILE}"
     log "Wrote ${PREFIXES_CLIENT_FILE}"
-  elif grep -q -- '-bgsp' "${PREFIXES_CLIENT_FILE}" 2>/dev/null; then
-    sed -i 's/-bgsp//g' "${PREFIXES_CLIENT_FILE}"
-    log "Removed -bgsp suffix from ${PREFIXES_CLIENT_FILE}"
   fi
+  # Do NOT strip '-bgsp' from the client prefixes here. A previous revision ran
+  # sed -i 's/-bgsp//g' on this file on every invocation, treating the suffix as
+  # obsolete. It is not obsolete: EGT's ingress does not recognise the bare
+  # labels for this operator and drops the connection rather than refusing it,
+  # so the only symptom is a request that hangs until timeout. Stripping also
+  # silently undid any manual correction at the next sync or rotation.
   if [[ ! -f "${PREFIXES_SHARED_FILE}" ]]; then
     if [[ -f "${PROXIES_ROOT}/config/prefixes-shared.env.example" ]]; then
       cp "${PROXIES_ROOT}/config/prefixes-shared.env.example" "${PREFIXES_SHARED_FILE}"
