@@ -37,6 +37,17 @@ server {
 
     location /__proxies_urls/ {
         internal;
+
+        # The auth_basic on the location above never runs: 'return 418' is handled
+        # in the rewrite phase, which precedes the access phase where auth_basic
+        # is evaluated. The error_page then redirects internally to here, and
+        # without a check of its own this location served the payload to anyone -
+        # no credentials and a wrong password both returned 200. Repeating the
+        # check here puts it in the access phase of the redirected request, which
+        # does run. Keep both: the one above issues the challenge for a plain GET.
+        auth_basic           "proxies domain API";
+        auth_basic_user_file __API_HTPASSWD__;
+
         default_type application/json;
         add_header Cache-Control "no-store" always;
         alias __URLS_ROOT__/urls/;
