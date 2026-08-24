@@ -1,0 +1,99 @@
+# Client manifest — the source of truth for which casinos this proxy serves.
+#
+# Applied to a VM with scripts/sync-clients-from-repo.sh, which regenerates
+# /etc/proxies/clients/*.env and runs manage-clients.sh sync when something changed.
+# Onboarding a brand is a one-line change and a pull request.
+#
+# Columns (tab or whitespace separated):
+#   client       hostname label prefix = EGT casino identifier, lowercased,
+#                underscore removed. Derive from the CASINOKEY, not the Casino
+#                column: they differ where a brand was renamed.
+#   casino_id    EGT casinokey. Reported as casinoId in the URL payload.
+#   host_suffix  '-bgsp' or 'none'. Which naming form is advertised for this brand.
+#                Both forms are always served; this only picks the advertised one.
+#   enabled      yes / no. 'no' means do not create vhosts or a URL payload.
+#   notes        free text, ignored by the sync script.
+#
+# Nothing here is secret: no credentials, no rotated domain. Those stay on the VM
+# in /etc/proxies/credentials.env and /var/lib/proxies/current-domain.
+#
+# Verify a label before enabling it:
+#   L=dnbahisbey-gc-prod-bgsp
+#   curl -sk --connect-to "$L.probe.example:443:p4.fpp-ong.com:443" \
+#        -o /dev/null -w '%{http_code}\n' "https://$L.probe.example/"
+#   Any HTTP code = routes. 000 = does not route.
+#
+# Status below measured against p3 and p4. Re-measure before trusting it.
+
+#client            casino_id            host_suffix  enabled  notes
+dnacarbet          174_ACARBET          -bgsp        yes
+dnbahisal          174_BAHISAL          -bgsp        yes
+dnbahisbey         174_BAHISBEY         -bgsp        yes
+dnbenjabet         174_BENJABET         -bgsp        yes
+dnbetbey           174_BETBEY           -bgsp        yes
+dnbetcell          174_BETCELL          -bgsp        yes
+dnbetera           174_BETERA           -bgsp        yes
+dnbetgar           174_BETGAR           -bgsp        yes
+dnbetgit           174_BETGIT           -bgsp        yes
+dnbetjara          174_BETJARA          -bgsp        yes
+dnbetkanyon        174_BETKANYON        -bgsp        yes
+dnbetkong          174_BETKONG          -bgsp        yes
+dnbetloto          174_BETLOTO          -bgsp        yes
+dnbetriyal         174_BETRIYAL         -bgsp        yes
+dnbetsalvador      174_BETSALVADOR      -bgsp        yes
+dnbetsin           174_BETSIN           -bgsp        yes
+dnbetvip           174_BETVIP           -bgsp        yes
+dnbetwild          174_BETWILD          -bgsp        yes
+dnbetwoon          174_BETWOON          -bgsp        yes
+dnbiabet           174_BIABET           -bgsp        yes
+dnbluesoft         174_BLUESOFT         -bgsp        yes
+dncannonbet        174_CANNONBET        -bgsp        yes
+dncasinofast       174_CASINOFAST       -bgsp        yes
+dncenabet          174_CENABET          -bgsp        yes
+dncepbahis         174_CEPBAHIS         -bgsp        yes
+dncratosroyalbet   174_CRATOSROYALBET   -bgsp        yes
+dndamabet          174_DAMABET          -bgsp        yes
+dndedebet          174_DEDEBET          -bgsp        yes
+dnfenomenbet       174_FENOMENBET       -bgsp        yes
+dnfestwin          174_FESTWIN          -bgsp        yes
+dngameofbet        174_GAMEOFBET        -bgsp        yes
+dngettobet         174_GETTOBET         -bgsp        yes
+dngirnecasino      174_GIRNECASINO      -bgsp        yes
+dngrandpashabet    174_GRANDPASHABET    -bgsp        yes
+dnhasbet           174_HASBET           -bgsp        yes
+dninagaming        174_INAGAMING        -bgsp        yes
+dnistekbet         174_ISTEKBET         -bgsp        yes
+dnjambobet         174_JAMBOBET         -bgsp        yes
+dnjumpobet         174_JUMPOBET         -bgsp        yes
+dnkhanbet          174_KHANBET          -bgsp        yes
+dnmaxwin           174_MAXWIN           -bgsp        yes
+dnmojobet          174_MOJOBET          -bgsp        yes
+dnparabet          174_PARABET          -bgsp        yes
+dnportbet          174_PORTBET          -bgsp        yes
+dnradissonbet      174_RADISSONBET      -bgsp        yes
+dnspinco           174_SPINCO           -bgsp        yes
+dnsuperbet         174_SUPERBET         -bgsp        yes
+dnvadicasino       174_VADICASINO       -bgsp        yes
+dnvitrinbet        174_VITRINBET        -bgsp        yes
+
+# --- exceptions -------------------------------------------------------------
+# Already migrated off the legacy suffix: dnpalacebet-gc-prod routes, the -bgsp
+# form does not. Proof that EGT flip brands individually.
+dnpalacebet        174_PALACEBET        none         yes      DN_PALACEBET, migrated
+# Listed as DN_ILKBAHIS but routes under its casinokey name. Presumably a rebrand
+# where EGT kept the original routing name.
+dnorjinbet         174_ORJINBET         -bgsp        yes      DN_ILKBAHIS renamed
+
+# --- not provisioned by EGT -------------------------------------------------
+# No -gc-prod or -gs-prod route on p3 or p4, in either naming form. Their
+# -api-prod / -lobby-prod answer 502, which is not evidence the brand exists:
+# a working brand returns the same 502 on its wrong cluster.
+# Awaiting EGT confirmation; flip to yes and re-probe once they respond.
+dn4pay             174_4PAY             -bgsp        no       not provisioned
+dnbahisen          174_BAHISEN          -bgsp        no       not provisioned
+dnbetjolly         174_BETJOLLY         -bgsp        no       not provisioned
+dnbetrupi          174_BETRUPI          -bgsp        no       not provisioned
+dnkayapremium      174_KAYAPREMIUM      -bgsp        no       not provisioned
+dnmaldobet         174_MALDOBET         -bgsp        no       not provisioned
+dntiosbet          174_TIOSBET          -bgsp        no       not provisioned
+dnzurihbet         174_ZURIHBET         -bgsp        no       not provisioned
