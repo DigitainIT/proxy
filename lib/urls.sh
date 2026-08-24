@@ -11,20 +11,35 @@ write_client_urls_json() {
   mkdir -p "${URLS_DIR}"
   chmod 755 "${URLS_DIR}" 2>/dev/null || true
 
-  # Isolate client env (CASINO_ID) without leaking into other clients.
+  # Isolate client env (CASINO_ID, HOST_SUFFIX) without leaking into other clients.
   CASINO_ID=""
+  HOST_SUFFIX="__default__"
   load_client_env "${client}"
   casino_id="${CASINO_ID:-${client}}"
 
+  # Which naming form this brand answers to. EGT are migrating off "-bgsp" brand
+  # by brand, so this has to be settable per client: DN_BAHISBEY routes only via
+  # -bgsp, DN_PALACEBET only without it. Set HOST_SUFFIX="" in the client's .env
+  # for a brand that has already been migrated.
+  # The proxy serves both hostname forms either way; this only decides which one
+  # is advertised to the platform.
+  local suffix="${HOST_SUFFIX}"
+  [[ "${suffix}" == "__default__" ]] && suffix="-bgsp"
+
+  # player-history / tournaments are shared across clients and currently route
+  # only via -bgsp for every brand. Override globally in credentials.env once EGT
+  # register the bare names.
+  local shared_suffix="${SHARED_HOST_SUFFIX--bgsp}"
+
   json="$(jq -n \
-    --arg hostUrl "https://${client}-gc-prod.${domain}" \
-    --arg apiServerUrl "https://${client}-api-prod.${domain}" \
+    --arg hostUrl "https://${client}-gc-prod${suffix}.${domain}" \
+    --arg apiServerUrl "https://${client}-api-prod${suffix}.${domain}" \
     --arg casinoId "${casino_id}" \
     --arg campaignUrl "https://campaign-prod.${domain}" \
     --arg jackpotContributionUrl "https://timescale-service-prod.${domain}" \
     --arg reconciliationUrl "https://history-service-prod.${domain}" \
-    --arg matchHistoryUrl "https://player-history-prod.${domain}" \
-    --arg tournamentUrl "https://tournaments-prod.${domain}" \
+    --arg matchHistoryUrl "https://player-history-prod${shared_suffix}.${domain}" \
+    --arg tournamentUrl "https://tournaments-prod${shared_suffix}.${domain}" \
     --arg status "OK" \
     '{
       hostUrl: $hostUrl,
