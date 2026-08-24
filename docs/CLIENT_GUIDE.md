@@ -15,7 +15,54 @@ Once a day (or on demand), the toolkit checks whether a new domain is due. With 
    - **CDN:** `cdn.<domain>` and `lobby-prod-cdn.<domain>` → `--cdn-origin`
    - **Backend:** per-client + shared hostname prefixes → `--backend-origin`
 
-One VM / one rotated domain can host **multiple clients**. Each client is a file under `/etc/proxies/clients/<name>.env`; hostname labels like `{name}-gc-prod` are generated from shared templates.
+One VM / one rotated domain can host **multiple clients**. Each client is a file under `/etc/proxies/clients/<name>.env`; hostname labels like `{name}-gc-prod-bgsp` are generated from shared templates.
+
+## Choosing the client id (read this before installing)
+
+The client id becomes the hostname label prefix, and EGT's ingress routes on that label
+alone. Get it wrong and requests are **dropped rather than refused** — the only symptom is
+a request that hangs until it times out, with nothing in the nginx error log.
+
+Use EGT's **casino identifier**, lowercased with the underscore removed:
+
+```
+DN_BAHISBEY  ->  --client 'dnbahisbey'  --casino-id '174_BAHISBEY'
+```
+
+Both parts matter. Measured against p4 with only the label varying:
+
+| Label | Result |
+|---|---|
+| `bahisbey-gc-prod` | not routed |
+| `bahisbey-gc-prod-bgsp` | not routed |
+| `dnbahisbey-gc-prod` | not routed |
+| `dnbahisbey-gc-prod-bgsp` | **200** |
+
+Derive it from the **casinokey**, not the Casino column — they differ where a brand has
+been renamed. `DN_ILKBAHIS` carries casinokey `174_ORJINBET` and routes as `dnorjinbet`.
+
+The casino id (`174_BAHISBEY`) cannot be used as the client id: underscores are illegal in
+hostnames. It goes in `--casino-id`, which only populates `casinoId` in the URL payload.
+
+### The `-bgsp` suffix
+
+EGT are migrating away from this legacy suffix **brand by brand**, not all at once.
+`DN_BAHISBEY` routes only via `-bgsp`; `DN_PALACEBET` routes only without it. The toolkit
+therefore generates **both** hostname forms for every client, so a brand that flips keeps
+working.
+
+Only the URL payload has to name one form. It defaults to `-bgsp`; for an
+already-migrated brand set `HOST_SUFFIX=""` in that client's `.env`.
+
+Check which form a brand answers to before onboarding it:
+
+```bash
+LABEL=dnbahisbey-gc-prod-bgsp
+curl -sk --connect-to "${LABEL}.probe.example:443:p4.fpp-ong.com:443" \
+     -o /dev/null -w '%{http_code}\n' "https://${LABEL}.probe.example/"
+```
+
+Any HTTP code means the label routes. `000` means it does not.
 
 How often a **new** domain is purchased is set at install with `--rotate-every-days` (default **1**). Cron still runs daily so incomplete setups can resume and expired local configs can be cleaned up.
 
